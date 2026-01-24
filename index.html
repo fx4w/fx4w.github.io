@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔罗牌占卜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .tarot-card {
+            width: 300px;
+            height: 450px;
+            margin: 0 auto 30px;
+            position: relative;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .tarot-card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-front {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .card-back {
+            background: #fff;
+            color: #333;
+            transform: rotateY(180deg);
+            padding: 20px;
+            text-align: left;
+            overflow-y: auto;
+        }
+
+        #draw-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        #draw-btn:hover {
+            background: #ff5252;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #draw-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .result-content {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .tips {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #f0f0f0;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 塔罗牌占卜</h1>
+        
+        <div class="tarot-card" id="tarotCard">
+            <div class="card-inner">
+                <div class="card-front">
+                    点击下方按钮抽牌<br>
+                    ✨ 心诚则灵 ✨
+                </div>
+                <div class="card-back">
+                    <div class="result-title" id="resultTitle"></div>
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <button id="draw-btn" onclick="drawTarot()">开始占卜</button>
+        
+ 
+    </div>
+
+    <script>
+        // 占卜结果库（涵盖爱情、事业、财运、运势等维度）
+        const tarotResults = [
+            {
+                title: "❤️ 爱情运势",
+                content: "近期你的爱情运势不错，单身者有机会遇到心仪的人，已有伴侣的人感情会更加升温。建议多主动表达自己的心意，不要吝啬赞美和关心，小小的惊喜能让感情更甜蜜。"
+            },
+            {
+                title: "💼 事业运势",
+                content: "工作上会遇到一些挑战，但这也是展现你能力的好机会。保持积极的工作态度，遇到问题多和同事沟通，你的努力会被上级看到，近期有升职加薪的潜在机会。"
+            },
+            {
+                title: "💰 财运运势",
+                content: "财运平稳，不会有大的破财风险，但也不要盲目投资。可以考虑一些稳健的理财方式，日常消费注意节制，积少成多，月底会有小笔意外收入。"
+            },
+            {
+                title: "🌟 整体运势",
+                content: "你的整体运势处于上升期，之前的努力开始慢慢有回报。保持乐观的心态，勇于尝试新事物，遇到困难不要轻易放弃，身边的人会给你重要的帮助。"
+            },
+            {
+                title: "🧘 健康运势",
+                content: "近期要注意作息规律，避免熬夜和过度劳累。适当的运动能提升你的精神状态，饮食上多吃蔬菜水果，少吃油腻食物，身体是一切的基础。"
+            },
+            {
+                title: "🤝 人际运势",
+                content: "人际关系和谐，会认识新的朋友，也能修复一些过去的矛盾。学会倾听他人的想法，你的包容和理解会让你收获更多的友谊，贵人运也随之而来。"
+            },
+            {
+                title: "📚 学习运势",
+                content: "学习效率较高，适合制定详细的学习计划并严格执行。遇到不懂的问题及时请教，不要拖延，近期的学习成果会在考试或实践中体现出来。"
+            },
+            {
+                title: "✈️ 出行运势",
+                content: "适合短途旅行，能放松心情，缓解压力。出行前注意检查行程安排，避开高峰时段，旅途中会有意外的美好发现，也可能遇到有趣的人。"
+            }
+        ];
+
+        let isDrawing = false; // 防止重复点击
+
+        // 抽牌占卜函数
+        function drawTarot() {
+            if (isDrawing) return;
+            
+            const card = document.getElementById('tarotCard');
+            const drawBtn = document.getElementById('draw-btn');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+
+            // 禁用按钮，防止重复点击
+            drawBtn.disabled = true;
+            drawBtn.textContent = "正在抽牌...";
+            isDrawing = true;
+
+            // 先重置卡片状态
+            card.classList.remove('flipped');
+            
+            // 模拟抽牌动画（延迟1.5秒显示结果）
+            setTimeout(() => {
+                // 随机选择一个占卜结果
+                const randomIndex = Math.floor(Math.random() * tarotResults.length);
+                const result = tarotResults[randomIndex];
+                
+                // 更新结果内容
+                resultTitle.textContent = result.title;
+                resultContent.textContent = result.content;
+                
+                // 翻转卡片显示结果
+                card.classList.add('flipped');
+                
+                // 恢复按钮状态
+                drawBtn.disabled = false;
+                drawBtn.textContent = "重新占卜";
+                isDrawing = false;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
